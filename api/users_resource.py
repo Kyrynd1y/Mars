@@ -7,7 +7,7 @@ def abort_if_user_not_found(user_id):
     user = session.query(User).get(user_id)
     if not user:
         abort(404, massage=f'User {user_id} not found')
-    return user
+    return user, session
 
 
 class UsersResource(Resource):
@@ -17,7 +17,7 @@ class UsersResource(Resource):
             rules='jobs')})
 
     def delete(self, user_id):
-        user = abort_if_user_not_found(user_id)
+        user, session = abort_if_user_not_found(user_id)
         session = db_session.create_session()
         session.delete(user)
         session.commit()
@@ -36,6 +36,9 @@ class UsersListResource(Resource):
     def post(self):
         args = parser.parse_args()
         session = db_session.create_session()
+        user = session.query(User).get(args.get('id'))
+        if user:
+            return jsonify({'error': 'Id already exists'})
         user = User(
             id=args.get['id'],
             surname=args['surname'],
